@@ -19,7 +19,7 @@ namespace Adv
         public AdvertisementService(MemoryCache cache)
         {
             this.cache = cache ?? throw new ArgumentNullException(nameof(cache));
-            this.maxRetryCount = int.Parse(ConfigurationManager.AppSettings["MaxRetryCount"]);
+            this.maxRetryCount = int.Parse(ConfigurationManager.AppSettings["RetryCount"]);
             this.errors = new Queue<DateTime>();
         }
 
