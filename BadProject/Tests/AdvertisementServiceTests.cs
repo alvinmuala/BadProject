@@ -10,7 +10,7 @@ namespace BadProject.Tests
     [TestClass]
     public class AdvertisementServiceTests
     {
-        public void GetAdvertisement_Must_Return_Advertisement()
+        public void GetAdvertisement_Must_Return_Advertisement_FromCache()
         {
             // Arrange
             var cache = new MemoryCache("test_cache");
