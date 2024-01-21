@@ -15,6 +15,11 @@ namespace Adv
         private readonly int maxErrorCount = 20;
         private readonly int maxRetryCount;
 
+        public AdvertisementService()
+        {
+            maxRetryCount = int.Parse(ConfigurationManager.AppSettings["RetryCount"]);
+        }
+
         // **************************************************************************************************
         // Loads Advertisement information by id
         // from cache or if not possible uses the "mainProvider" or if not possible uses the "backupProvider"
