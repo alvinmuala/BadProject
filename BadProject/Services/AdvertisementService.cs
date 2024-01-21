@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BadProject.Contracts.Services;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -8,17 +9,18 @@ using ThirdParty;
 
 namespace Adv
 {
-    public class AdvertisementService
+    public class AdvertisementService : IAdvertisementService
     {
-        private readonly MemoryCache cache = new MemoryCache("");
-        private readonly Queue<DateTime> errors = new Queue<DateTime>();
+        private readonly MemoryCache cache;
         private readonly object lockObj = new object();
+        private readonly Queue<DateTime> errors;
         private readonly int maxRetryCount;
-        private readonly int maxErrorCount = 20;
-
-        public AdvertisementService()
+        private const int MaxErrorCount = 20;
+        public AdvertisementService(MemoryCache cache)
         {
-            maxRetryCount = int.Parse(ConfigurationManager.AppSettings["RetryCount"]);
+            this.cache = cache ?? throw new ArgumentNullException(nameof(cache));
+            this.maxRetryCount = int.Parse(ConfigurationManager.AppSettings["MaxRetryCount"]);
+            this.errors = new Queue<DateTime>();
         }
 
         public Advertisement GetAdvertisement(string id)
@@ -93,7 +95,7 @@ namespace Adv
 
         private void PruneOldErrors()
         {
-            while (errors.Count > maxErrorCount)
+            while (errors.Count > MaxErrorCount)
             {
                 errors.Dequeue();
             }
