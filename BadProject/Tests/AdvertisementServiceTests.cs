@@ -10,6 +10,8 @@ namespace BadProject.Tests
     [TestClass]
     public class AdvertisementServiceTests
     {
+
+        [TestMethod]
         public void GetAdvertisement_Must_Return_Advertisement_FromCache()
         {
             // Arrange
