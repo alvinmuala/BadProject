@@ -40,7 +40,7 @@ namespace Adv
         {
             lock (lockObj)
             {
-                Advertisement adv = TryGetAdvertisementFromCache(id);
+                Advertisement adv = GetAdvertisementFromCache(id);
 
                 // Count HTTP error timestamps in the last hour
                 while (errors.Count > maxErrorCount) errors.Dequeue();
@@ -57,27 +57,7 @@ namespace Adv
                 // If Cache is empty and ErrorCount<10 then use HTTP provider
                 if ((adv == null) && (errorCount < 10))
                 {
-                    int retry = 0;
-                    do
-                    {
-                        retry++;
-                        try
-                        {
-                            var dataProvider = new NoSqlAdvProvider();
-                            adv = dataProvider.GetAdv(id);
-                        }
-                        catch
-                        {
-                            Thread.Sleep(1000);
-                            errors.Enqueue(DateTime.Now); // Store HTTP error timestamp              
-                        }
-                    } while ((adv == null) && (retry < int.Parse(ConfigurationManager.AppSettings["RetryCount"])));
-
-
-                    if (adv != null)
-                    {
-                        cache.Set($"AdvKey_{id}", adv, DateTimeOffset.Now.AddMinutes(5));
-                    }
+                    //add GetAdvertisementFromHttpProvider method here 
                 }
 
 
@@ -95,9 +75,37 @@ namespace Adv
             return adv;
         }
 
-        private Advertisement TryGetAdvertisementFromCache(string id)
+        private Advertisement GetAdvertisementFromCache(string id)
         {
             return (Advertisement)cache.Get($"AdvKey_{id}");
+        }
+
+        private Advertisement GetAdvertisementFromHttpProvider(string id)
+        {
+            Advertisement adv = null;
+            int retry = 0;
+
+            do
+            {
+                retry++;
+                try
+                {
+                    var dataProvider = new NoSqlAdvProvider();
+                    adv = dataProvider.GetAdv(id);
+                }
+                catch
+                {
+                    Thread.Sleep(1000);
+                    errors.Enqueue(DateTime.Now);
+                }
+            } while (adv == null && retry < maxRetryCount);
+
+            if (adv != null)
+            {
+                cache.Set($"AdvKey_{id}", adv, DateTimeOffset.Now.AddMinutes(5));
+            }
+
+            return adv;
         }
     }
 }
