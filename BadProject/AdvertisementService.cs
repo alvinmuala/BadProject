@@ -1,6 +1,8 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Linq.Expressions;
 using System.Runtime.Caching;
 using System.Threading;
 using ThirdParty;
@@ -12,8 +14,8 @@ namespace Adv
         private readonly MemoryCache cache = new MemoryCache("");
         private readonly Queue<DateTime> errors = new Queue<DateTime>();
         private readonly object lockObj = new object();
-        private readonly int maxErrorCount = 20;
         private readonly int maxRetryCount;
+        private readonly int maxErrorCount = 20;
 
         public AdvertisementService()
         {
@@ -36,12 +38,9 @@ namespace Adv
         //    it uses the SqlDataProvider (backupProvider)
         public Advertisement GetAdvertisement(string id)
         {
-            Advertisement adv = null;
-
             lock (lockObj)
             {
-                // Use Cache if available
-                adv = (Advertisement)cache.Get($"AdvKey_{id}");
+                Advertisement adv = TryGetAdvertisementFromCache(id);
 
                 // Count HTTP error timestamps in the last hour
                 while (errors.Count > maxErrorCount) errors.Dequeue();
@@ -94,6 +93,11 @@ namespace Adv
                 }
             }
             return adv;
+        }
+
+        private Advertisement TryGetAdvertisementFromCache(string id)
+        {
+            return (Advertisement)cache.Get($"AdvKey_{id}");
         }
     }
 }
