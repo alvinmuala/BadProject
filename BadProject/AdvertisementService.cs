@@ -9,10 +9,9 @@ namespace Adv
 {
     public class AdvertisementService
     {
-        private static MemoryCache cache = new MemoryCache("");
-        private static Queue<DateTime> errors = new Queue<DateTime>();
-
-        private Object lockObj = new Object();
+        private readonly MemoryCache cache = new MemoryCache("");
+        private readonly Queue<DateTime> errors = new Queue<DateTime>();
+        private readonly object lockObj = new object();
         // **************************************************************************************************
         // Loads Advertisement information by id
         // from cache or if not possible uses the "mainProvider" or if not possible uses the "backupProvider"
