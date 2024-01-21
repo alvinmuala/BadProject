@@ -12,6 +12,9 @@ namespace Adv
         private readonly MemoryCache cache = new MemoryCache("");
         private readonly Queue<DateTime> errors = new Queue<DateTime>();
         private readonly object lockObj = new object();
+        private readonly int maxErrorCount = 20;
+        private readonly int maxRetryCount;
+
         // **************************************************************************************************
         // Loads Advertisement information by id
         // from cache or if not possible uses the "mainProvider" or if not possible uses the "backupProvider"
@@ -36,7 +39,7 @@ namespace Adv
                 adv = (Advertisement)cache.Get($"AdvKey_{id}");
 
                 // Count HTTP error timestamps in the last hour
-                while (errors.Count > 20) errors.Dequeue();
+                while (errors.Count > maxErrorCount) errors.Dequeue();
                 int errorCount = 0;
                 foreach (var dat in errors)
                 {
