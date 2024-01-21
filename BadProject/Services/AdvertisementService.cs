@@ -27,24 +27,24 @@ namespace Adv
         {
             lock (lockObj)
             {
-                var adv = GetAdvertisementFromCache(id);
+                var advertisement = GetAdvertisementFromCache(id);
 
-                if (adv == null)
+                if (advertisement == null)
                 {
                     var errorCount = GetHttpErrorsCount();
 
                     if (errorCount < 10)
                     {
-                        adv = GetAdvertisementFromHttpProvider(id);
+                        advertisement = GetAdvertisementFromHttpProvider(id);
                     }
 
-                    if (adv == null)
+                    if (advertisement == null)
                     {
-                        adv = GetAdvertisementFromBackupProvider(id);
+                        advertisement = GetAdvertisementFromBackupProvider(id);
                     }
                 }
 
-                return adv;
+                return advertisement;
             }
         }
 
@@ -55,7 +55,7 @@ namespace Adv
 
         private Advertisement GetAdvertisementFromHttpProvider(string id)
         {
-            Advertisement adv = null;
+            Advertisement advertisement = null;
             var retry = 0;
 
             do
@@ -64,33 +64,33 @@ namespace Adv
                 try
                 {
                     var dataProvider = new NoSqlAdvProvider();
-                    adv = dataProvider.GetAdv(id);
+                    advertisement = dataProvider.GetAdv(id);
                 }
                 catch
                 {
                     Thread.Sleep(1000);
                     errors.Enqueue(DateTime.Now);
                 }
-            } while (adv == null && retry < maxRetryCount);
+            } while (advertisement == null && retry < maxRetryCount);
 
-            if (adv != null)
+            if (advertisement != null)
             {
-                cache.Set($"AdvKey_{id}", adv, DateTimeOffset.Now.AddMinutes(5));
+                cache.Set($"AdvKey_{id}", advertisement, DateTimeOffset.Now.AddMinutes(5));
             }
 
-            return adv;
+            return advertisement;
         }
 
         private Advertisement GetAdvertisementFromBackupProvider(string id)
         {
-            var adv = SQLAdvProvider.GetAdv(id);
+            var advertisement = SQLAdvProvider.GetAdv(id);
 
-            if (adv != null)
+            if (advertisement != null)
             {
-                cache.Set($"AdvKey_{id}", adv, DateTimeOffset.Now.AddMinutes(5));
+                cache.Set($"AdvKey_{id}", advertisement, DateTimeOffset.Now.AddMinutes(5));
             }
 
-            return adv;
+            return advertisement;
         }
 
         private void PruneOldErrors()
