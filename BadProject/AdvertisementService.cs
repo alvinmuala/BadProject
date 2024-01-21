@@ -21,63 +21,30 @@ namespace Adv
             maxRetryCount = int.Parse(ConfigurationManager.AppSettings["RetryCount"]);
         }
 
-        // **************************************************************************************************
-        // Loads Advertisement information by id
-        // from cache or if not possible uses the "mainProvider" or if not possible uses the "backupProvider"
-        // **************************************************************************************************
-        // Detailed Logic:
-        // 
-        // 1. Tries to use cache (and retuns the data or goes to STEP2)
-        //
-        // 2. If the cache is empty it uses the NoSqlDataProvider (mainProvider), 
-        //    in case of an error it retries it as many times as needed based on AppSettings
-        //    (returns the data if possible or goes to STEP3)
-        //
-        // 3. If it can't retrive the data or the ErrorCount in the last hour is more than 10, 
-        //    it uses the SqlDataProvider (backupProvider)
+      
         public Advertisement GetAdvertisement(string id)
         {
             lock (lockObj)
             {
-                Advertisement adv = GetAdvertisementFromCache(id);
+                var adv = GetAdvertisementFromCache(id);
 
                 if(adv == null)
                 {
-                    // add new logic here 
-                }
+                    int errorCount = GetHttpErrorsCount();
 
-                //todo: remove code below 
-                // Count HTTP error timestamps in the last hour
-                while (errors.Count > maxErrorCount) errors.Dequeue();
-                int errorCount = 0;
-                foreach (var dat in errors)
-                {
-                    if (dat > DateTime.Now.AddHours(-1))
+                    if (errorCount < 10)
                     {
-                        errorCount++;
+                        adv = GetAdvertisementFromHttpProvider(id);
+                    }
+
+                    if (adv == null)
+                    {
+                        adv = GetAdvertisementFromBackupProvider(id);
                     }
                 }
 
-
-                // If Cache is empty and ErrorCount<10 then use HTTP provider
-                if ((adv == null) && (errorCount < 10))
-                {
-                    //add GetAdvertisementFromHttpProvider method here 
-                }
-
-
-                // if needed try to use Backup provider
-                if (adv == null)
-                {
-                    adv = SQLAdvProvider.GetAdv(id);
-
-                    if (adv != null)
-                    {
-                        cache.Set($"AdvKey_{id}", adv, DateTimeOffset.Now.AddMinutes(5));
-                    }
-                }
+                return adv;
             }
-            return adv;
         }
 
         private Advertisement GetAdvertisementFromCache(string id)
@@ -113,6 +80,18 @@ namespace Adv
             return adv;
         }
 
+        private Advertisement GetAdvertisementFromBackupProvider(string id)
+        {
+            var adv = SQLAdvProvider.GetAdv(id);
+
+            if (adv != null)
+            {
+                cache.Set($"AdvKey_{id}", adv, DateTimeOffset.Now.AddMinutes(5));
+            }
+
+            return adv;
+        }
+
         private void PruneOldErrors()
         {
             while (errors.Count > maxErrorCount)
@@ -121,7 +100,7 @@ namespace Adv
             }
         }
 
-        private int HttpErrors()
+        private int GetHttpErrorsCount()
         {
             PruneOldErrors();
 
