@@ -21,16 +21,15 @@ namespace Adv
             maxRetryCount = int.Parse(ConfigurationManager.AppSettings["RetryCount"]);
         }
 
-      
         public Advertisement GetAdvertisement(string id)
         {
             lock (lockObj)
             {
                 var adv = GetAdvertisementFromCache(id);
 
-                if(adv == null)
+                if (adv == null)
                 {
-                    int errorCount = GetHttpErrorsCount();
+                    var errorCount = GetHttpErrorsCount();
 
                     if (errorCount < 10)
                     {
@@ -55,7 +54,7 @@ namespace Adv
         private Advertisement GetAdvertisementFromHttpProvider(string id)
         {
             Advertisement adv = null;
-            int retry = 0;
+            var retry = 0;
 
             do
             {
