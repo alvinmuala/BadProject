@@ -1,8 +1,7 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Linq.Expressions;
+using System.Linq;
 using System.Runtime.Caching;
 using System.Threading;
 using ThirdParty;
@@ -42,6 +41,12 @@ namespace Adv
             {
                 Advertisement adv = GetAdvertisementFromCache(id);
 
+                if(adv == null)
+                {
+                    // add new logic here 
+                }
+
+                //todo: remove code below 
                 // Count HTTP error timestamps in the last hour
                 while (errors.Count > maxErrorCount) errors.Dequeue();
                 int errorCount = 0;
@@ -106,6 +111,21 @@ namespace Adv
             }
 
             return adv;
+        }
+
+        private void PruneOldErrors()
+        {
+            while (errors.Count > maxErrorCount)
+            {
+                errors.Dequeue();
+            }
+        }
+
+        private int HttpErrors()
+        {
+            PruneOldErrors();
+
+            return errors.Count(e => e > DateTime.Now.AddHours(-1));
         }
     }
 }
